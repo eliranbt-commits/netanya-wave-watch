@@ -50,19 +50,29 @@
   </div>
 
   <script>
-    async function fetchMarineData(lat, lon) {
-      const url = `https://marine-api.open-meteo.com/v1/marine?latitude=${lat}&longitude=${lon}&daily=wave_height_max,wind_speed_10m_max,wind_direction_10m_dominant&timezone=auto`;
-      const response = await fetch(url);
-      const data = await response.json();
+async function fetchMarineData(lat, lon) {
+  const url = `https://marine-api.open-meteo.com/v1/marine?latitude=${lat}&longitude=${lon}&daily=wave_height_max,wind_speed_10m_max,wind_direction_10m_dominant&timezone=auto`;
 
-      const labels = data.daily.time.map(date => date.slice(5)); // MM-DD
-      const waveData = data.daily.wave_height_max;
-      const windSpeed = data.daily.wind_speed_10m_max[0];
-      const windDir = data.daily.wind_direction_10m_dominant[0];
-      const tide = data.daily.tide_height_max ? data.daily.tide_height_max[0] : "לא זמין";
+  try {
+    const response = await fetch(url);
+    const data = await response.json();
 
-      return { labels, waveData, windSpeed, windDir, tide };
+    if (!data.daily || !data.daily.time) {
+      throw new Error("ה־API לא החזיר נתונים יומיים תקינים");
     }
+
+    const labels = data.daily.time.map(date => date.slice(5)); // MM-DD
+    const waveData = data.daily.wave_height_max;
+    const windSpeed = data.daily.wind_speed_10m_max[0];
+    const windDir = data.daily.wind_direction_10m_dominant[0];
+
+    return { labels, waveData, windSpeed, windDir, tide: "לא זמין" };
+  } catch (error) {
+    console.error("שגיאה בשליפת נתוני ים:", error);
+    return { labels: [], waveData: [], windSpeed: "לא זמין", windDir: 0, tide: "לא זמין" };
+  }
+}
+
 
     function getWindDirection(degrees) {
       const directions = ['צפון', 'צפון-מזרח', 'מזרח', 'דרום-מזרח', 'דרום', 'דרום-מערב', 'מערב', 'צפון-מערב'];
@@ -99,4 +109,5 @@
   </script>
 </body>
 </html>
+
 
