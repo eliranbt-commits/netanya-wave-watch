@@ -52,4 +52,50 @@
       const sironit = await fetchWaveData(32.332, 34.857);
 
       if (poleg.waveHeights.length === 0 || sironit.waveHeights.length === 0) {
-        document.body.innerHTML += "<p>⚠️ לא הצלחנו לטעון את הנתונים. בדוק חיבור לאינטרנט או נסה שוב מאוחר
+        document.body.innerHTML += "<p>⚠️ לא הצלחנו לטעון את הנתונים. בדוק חיבור לאינטרנט או נסה שוב מאוחר יותר.</p>";
+        return;
+      }
+
+      new Chart(document.getElementById('polegChart'), {
+        type: 'line',
+        data: {
+          labels: poleg.labels,
+          datasets: [{
+            label: 'גובה גלים בפולג (מטר)',
+            data: poleg.waveHeights,
+            borderColor: '#0288d1',
+            backgroundColor: 'rgba(2,136,209,0.2)',
+            fill: true
+          }]
+        },
+        options: {
+          scales: {
+            y: { beginAtZero: true }
+          }
+        }
+      });
+
+      new Chart(document.getElementById('sironitChart'), {
+        type: 'line',
+        data: {
+          labels: sironit.labels,
+          datasets: [{
+            label: 'גובה גלים בסירונית (מטר)',
+            data: sironit.waveHeights,
+            borderColor: '#00796b',
+            backgroundColor: 'rgba(0,121,107,0.2)',
+            fill: true
+          }]
+        },
+        options: {
+          scales: {
+            y: { beginAtZero: true }
+          }
+        }
+      });
+    }
+
+    renderCharts();
+  </script>
+</body>
+</html>
