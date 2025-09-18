@@ -51,7 +51,7 @@
 
   <script>
     async function fetchMarineData(lat, lon) {
-      const url = `https://marine-api.open-meteo.com/v1/marine?latitude=${lat}&longitude=${lon}&daily=wave_height_max,tide_height_max,wind_speed_10m_max,wind_direction_10m_dominant&timezone=auto`;
+      const url = `https://marine-api.open-meteo.com/v1/marine?latitude=${lat}&longitude=${lon}&daily=wave_height_max,wind_speed_10m_max,wind_direction_10m_dominant&timezone=auto`;
       const response = await fetch(url);
       const data = await response.json();
 
@@ -99,3 +99,4 @@
   </script>
 </body>
 </html>
+
