@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Netanya Wave Watch</title>
+  <style>
+    body { font-family: sans-serif; background: #e0f7fa; text-align: center; padding: 2em; }
+    h1 { color: #00796b; }
+    #wave { font-size: 1.5em; margin-top: 1em; }
+  </style>
+</head>
+<body>
+  <h1>🌊 Netanya Wave Watch</h1>
+  <div id="wave">Loading wave height...</div>
+
+  <script>
+    async function getWaveHeight() {
+      const response = await fetch('https://marine-api.open-meteo.com/v1/marine?latitude=32.321&longitude=34.857&hourly=wave_height');
+      const data = await response.json();
+      const waveHeight = data.hourly.wave_height[0]; // First hour's wave height
+      document.getElementById('wave').innerText = `Current wave height: ${waveHeight} meters`;
+    }
+
+    getWaveHeight();
+  </script>
+</body>
+</html>
