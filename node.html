@@ -1,12 +1,24 @@
 <!DOCTYPE html>
-<html>
+<html lang="he">
 <head>
+  <meta charset="UTF-8">
   <title>Netanya Surf Tracker</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    body { font-family: sans-serif; background: #e0f7fa; padding: 2em; }
-    h1 { text-align: center; color: #00796b; }
-    .chart-container { width: 90%; margin: auto; margin-top: 2em; }
+    body {
+      font-family: Arial, sans-serif;
+      background: #e0f7fa;
+      padding: 2em;
+      text-align: center;
+    }
+    h1 {
+      color: #00796b;
+    }
+    .chart-container {
+      width: 90%;
+      max-width: 800px;
+      margin: 2em auto;
+    }
   </style>
 </head>
 <body>
@@ -20,31 +32,24 @@
 
   <script>
     async function fetchWaveData(lat, lon) {
-      const res = await fetch(`https://marine-api.open-meteo.com/v1/marine?latitude=${lat}&longitude=${lon}&hourly=wave_height`);
-      const data = await res.json();
-      return data.hourly.wave_height.slice(0, 24); // Next 24 hours
+      try {
+        const url = `https://marine-api.open-meteo.com/v1/marine?latitude=${lat}&longitude=${lon}&hourly=wave_height&timezone=auto`;
+        const response = await fetch(url);
+        const data = await response.json();
+
+        const waveHeights = data.hourly.wave_height.slice(0, 24);
+        const labels = data.hourly.time.slice(0, 24).map(t => t.split('T')[1].slice(0, 5)); // שעה בלבד
+
+        return { waveHeights, labels };
+      } catch (error) {
+        console.error("שגיאה בשליפת נתונים:", error);
+        return { waveHeights: [], labels: [] };
+      }
     }
 
     async function renderCharts() {
-      const polegData = await fetchWaveData(32.270, 34.825);
-      const sironitData = await fetchWaveData(32.332, 34.857);
-      const labels = Array.from({length: 24}, (_, i) => `${i}:00`);
+      const poleg = await fetchWaveData(32.270, 34.825);
+      const sironit = await fetchWaveData(32.332, 34.857);
 
-      new Chart(document.getElementById('polegChart'), {
-        type: 'line',
-        data: {
-          labels,
-          datasets: [{
-            label: 'Poleg Beach Wave Height (m)',
-            data: polegData,
-            borderColor: '#0288d1',
-            fill: false
-          }]
-        }
-      });
-
-      new Chart(document.getElementById('sironitChart'), {
-        type: 'line',
-        data: {
-          labels,
-          datasets
+      if (poleg.waveHeights.length === 0 || sironit.waveHeights.length === 0) {
+        document.body.innerHTML += "<p>⚠️ לא הצלחנו לטעון את הנתונים. בדוק חיבור לאינטרנט או נסה שוב מאוחר
