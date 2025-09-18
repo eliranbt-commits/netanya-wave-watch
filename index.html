@@ -19,50 +19,69 @@
       max-width: 800px;
       margin: 2em auto;
     }
+    canvas {
+      max-width: 100%;
+    }
+    .info-box {
+      background: #ffffff;
+      border-radius: 8px;
+      padding: 1em;
+      margin: 1em auto;
+      max-width: 600px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    .info-box h3 {
+      margin-bottom: 0.5em;
+      color: #00796b;
+    }
   </style>
 </head>
 <body>
   <h1>🌊 Netanya Surf Tracker</h1>
-  <div class="chart-container">
-    <canvas id="polegChart"></canvas>
+
+  <div class="info-box" id="conditionsBox">
+    <h3>תנאים נוכחיים בפולג</h3>
+    <p id="windInfo">רוח: טוען...</p>
+    <p id="tideInfo">גובה גאות: טוען...</p>
   </div>
+
   <div class="chart-container">
-    <canvas id="sironitChart"></canvas>
+    <canvas id="forecastChart"></canvas>
   </div>
 
   <script>
-    async function fetchWaveData(lat, lon) {
-      try {
-        const url = `https://marine-api.open-meteo.com/v1/marine?latitude=${lat}&longitude=${lon}&hourly=wave_height&timezone=auto`;
-        const response = await fetch(url);
-        const data = await response.json();
+    async function fetchMarineData(lat, lon) {
+      const url = `https://marine-api.open-meteo.com/v1/marine?latitude=${lat}&longitude=${lon}&daily=wave_height_max,tide_height_max,wind_speed_10m_max,wind_direction_10m_dominant&timezone=auto`;
+      const response = await fetch(url);
+      const data = await response.json();
 
-        const waveHeights = data.hourly.wave_height.slice(0, 24);
-        const labels = data.hourly.time.slice(0, 24).map(t => t.split('T')[1].slice(0, 5)); // שעה בלבד
+      const labels = data.daily.time.map(date => date.slice(5)); // MM-DD
+      const waveData = data.daily.wave_height_max;
+      const windSpeed = data.daily.wind_speed_10m_max[0];
+      const windDir = data.daily.wind_direction_10m_dominant[0];
+      const tide = data.daily.tide_height_max ? data.daily.tide_height_max[0] : "לא זמין";
 
-        return { waveHeights, labels };
-      } catch (error) {
-        console.error("שגיאה בשליפת נתונים:", error);
-        return { waveHeights: [], labels: [] };
-      }
+      return { labels, waveData, windSpeed, windDir, tide };
     }
 
-    async function renderCharts() {
-      const poleg = await fetchWaveData(32.270, 34.825);
-      const sironit = await fetchWaveData(32.332, 34.857);
+    function getWindDirection(degrees) {
+      const directions = ['צפון', 'צפון-מזרח', 'מזרח', 'דרום-מזרח', 'דרום', 'דרום-מערב', 'מערב', 'צפון-מערב'];
+      return directions[Math.round(degrees / 45) % 8];
+    }
 
-      if (poleg.waveHeights.length === 0 || sironit.waveHeights.length === 0) {
-        document.body.innerHTML += "<p>⚠️ לא הצלחנו לטעון את הנתונים. בדוק חיבור לאינטרנט או נסה שוב מאוחר יותר.</p>";
-        return;
-      }
+    async function renderForecast() {
+      const { labels, waveData, windSpeed, windDir, tide } = await fetchMarineData(32.270, 34.825); // Poleg
 
-      new Chart(document.getElementById('polegChart'), {
+      document.getElementById("windInfo").textContent = `רוח: ${windSpeed} קמ"ש, כיוון ${getWindDirection(windDir)}`;
+      document.getElementById("tideInfo").textContent = `גובה גאות: ${tide} מטר`;
+
+      new Chart(document.getElementById('forecastChart'), {
         type: 'line',
         data: {
-          labels: poleg.labels,
+          labels,
           datasets: [{
-            label: 'גובה גלים בפולג (מטר)',
-            data: poleg.waveHeights,
+            label: 'גובה גלים יומי בפולג (מטר)',
+            data: waveData,
             borderColor: '#0288d1',
             backgroundColor: 'rgba(2,136,209,0.2)',
             fill: true
@@ -74,28 +93,9 @@
           }
         }
       });
-
-      new Chart(document.getElementById('sironitChart'), {
-        type: 'line',
-        data: {
-          labels: sironit.labels,
-          datasets: [{
-            label: 'גובה גלים בסירונית (מטר)',
-            data: sironit.waveHeights,
-            borderColor: '#00796b',
-            backgroundColor: 'rgba(0,121,107,0.2)',
-            fill: true
-          }]
-        },
-        options: {
-          scales: {
-            y: { beginAtZero: true }
-          }
-        }
-      });
     }
 
-    renderCharts();
+    renderForecast();
   </script>
 </body>
 </html>
