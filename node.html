@@ -1,26 +1,50 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Netanya Wave Watch</title>
+  <title>Netanya Surf Tracker</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    body { font-family: sans-serif; background: #e0f7fa; text-align: center; padding: 2em; }
-    h1 { color: #00796b; }
-    #wave { font-size: 1.5em; margin-top: 1em; }
+    body { font-family: sans-serif; background: #e0f7fa; padding: 2em; }
+    h1 { text-align: center; color: #00796b; }
+    .chart-container { width: 90%; margin: auto; margin-top: 2em; }
   </style>
 </head>
 <body>
-  <h1>🌊 Netanya Wave Watch</h1>
-  <div id="wave">Loading wave height...</div>
+  <h1>🌊 Netanya Surf Tracker</h1>
+  <div class="chart-container">
+    <canvas id="polegChart"></canvas>
+  </div>
+  <div class="chart-container">
+    <canvas id="sironitChart"></canvas>
+  </div>
 
   <script>
-    async function getWaveHeight() {
-      const response = await fetch('https://marine-api.open-meteo.com/v1/marine?latitude=32.321&longitude=34.857&hourly=wave_height');
-      const data = await response.json();
-      const waveHeight = data.hourly.wave_height[0]; // First hour's wave height
-      document.getElementById('wave').innerText = `Current wave height: ${waveHeight} meters`;
+    async function fetchWaveData(lat, lon) {
+      const res = await fetch(`https://marine-api.open-meteo.com/v1/marine?latitude=${lat}&longitude=${lon}&hourly=wave_height`);
+      const data = await res.json();
+      return data.hourly.wave_height.slice(0, 24); // Next 24 hours
     }
 
-    getWaveHeight();
-  </script>
-</body>
-</html>
+    async function renderCharts() {
+      const polegData = await fetchWaveData(32.270, 34.825);
+      const sironitData = await fetchWaveData(32.332, 34.857);
+      const labels = Array.from({length: 24}, (_, i) => `${i}:00`);
+
+      new Chart(document.getElementById('polegChart'), {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [{
+            label: 'Poleg Beach Wave Height (m)',
+            data: polegData,
+            borderColor: '#0288d1',
+            fill: false
+          }]
+        }
+      });
+
+      new Chart(document.getElementById('sironitChart'), {
+        type: 'line',
+        data: {
+          labels,
+          datasets
